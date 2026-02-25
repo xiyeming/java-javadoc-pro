@@ -3,7 +3,7 @@
   "displayName": "Java Javadoc Pro",
   "publisher": "xiyeming",
   "description": "Java的IDEA风格Javadoc和文件头生成器。",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "icon": "assets/logo.png",
   "license": "MIT",
   "repository": {
@@ -15,6 +15,11 @@
   },
   "categories": [
     "Other"
+  ],
+  "keywords": [
+    "java",
+    "javadoc",
+    "comment"
   ],
   "activationEvents": [],
   "main": "./dist/extension.js",
