@@ -4,6 +4,7 @@
   "publisher": "xiyeming",
   "description": "Java的IDEA风格Javadoc和文件头生成器。",
   "version": "0.0.1",
+  "icon": "assets/logo.png",
   "license": "MIT",
   "repository": {
     "type": "git",
