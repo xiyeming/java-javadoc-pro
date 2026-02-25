@@ -6,8 +6,8 @@ export interface MethodInfo {
 }
 
 /**
- * Parsing a method signature string to extract parameters and return type.
- * Assumes signature looks like `[modifiers] <type params> ReturnType methodName(ParamType paramName, ...)`
+ * 解析方法签名字符串以提取参数和返回类型。
+ * 假定签名看起来类似于 `[modifiers] <type params> ReturnType methodName(ParamType paramName, ...)`
  */
 export function parseMethodSignature(methodText: string): MethodInfo {
     const info: MethodInfo = {
@@ -15,10 +15,10 @@ export function parseMethodSignature(methodText: string): MethodInfo {
         returnType: 'void'
     };
 
-    // Remove comments and newlines to simplify parsing
+    // 移除注释和换行符以便于简化解析过程
     let cleanText = methodText.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '').replace(/\n/g, ' ').trim();
 
-    // The method signature is everything before the '{' or ';'
+    // 取 '{' 或 ';' 之前的所有内容作为方法签名主体
     const braceIndex = cleanText.indexOf('{');
     const semiIndex = cleanText.indexOf(';');
 
@@ -33,7 +33,7 @@ export function parseMethodSignature(methodText: string): MethodInfo {
 
     const signature = cleanText.substring(0, signatureEnd).trim();
 
-    // Extract parameters
+    // 提取出参数括号块
     const paramStart = signature.lastIndexOf('(');
     const paramEnd = signature.lastIndexOf(')');
 
@@ -42,14 +42,14 @@ export function parseMethodSignature(methodText: string): MethodInfo {
         info.params = parseParameters(paramString);
     }
 
-    // Extract return type: it should be the part before the method name
+    // 提取返回值类型：它应该是排在方法名之前的那部分内容
     if (paramStart !== -1) {
         const returnAndName = signature.substring(0, paramStart).trim();
         const parts = returnAndName.split(/\s+/);
 
-        // Handling generic return types like `IPage<CrsItemVo> getItems`
-        // We can't just use split on space if the generic type has spaces e.g., `Map<String, List<Long>>`
-        // Need to parse backwards from the method name
+        // 处理类似 `IPage<CrsItemVo> getItems` 的泛型返回值
+        // 如果泛型里面带有空格例如 `Map<String, List<Long>>`，我们就不能无脑使用 split 按空格分隔了
+        // 因此需要从方法名倒过来解析
 
         let inGenerics = 0;
         let methodNameStart = -1;
@@ -58,7 +58,7 @@ export function parseMethodSignature(methodText: string): MethodInfo {
             if (char === '>') inGenerics++;
             else if (char === '<') inGenerics--;
             else if (inGenerics === 0 && /\s/.test(char) && methodNameStart === -1) {
-                // First space outside of generics, going backwards from the end, isolates the method name
+                // 找到第一个不在 '<>' 泛型范围中的空格，这就标志着隔离出了方法名称
                 methodNameStart = i;
                 break;
             }
@@ -66,8 +66,8 @@ export function parseMethodSignature(methodText: string): MethodInfo {
 
         if (methodNameStart !== -1) {
             const modifiersAndReturn = returnAndName.substring(0, methodNameStart).trim();
-            // Now we extract the return type from the remaining string by taking the last part (ignoring public, static etc)
-            // Need to apply the generic logic again
+            // 此时剩下前半部分的修饰符与返回值，截取掉多余前缀拿到最终返回值
+            // 这里同样需要执行泛型倒查逻辑以防类型也被按空格分离
             let typeStart = 0;
             let typeInGenerics = 0;
             for (let i = modifiersAndReturn.length - 1; i >= 0; i--) {
@@ -80,7 +80,7 @@ export function parseMethodSignature(methodText: string): MethodInfo {
                 }
             }
             let returnTypeRaw = modifiersAndReturn.substring(typeStart).trim();
-            // Handle generic declarations before return type e.g. public <T> List<T> getList()
+            // 处理在返回值之前有泛型声明的场景，例如 public <T> List<T> getList()
             if (returnTypeRaw.endsWith('>')) {
                 const gtIdx = modifiersAndReturn.lastIndexOf('>');
                 if (gtIdx != -1) {
@@ -92,7 +92,7 @@ export function parseMethodSignature(methodText: string): MethodInfo {
                         if (c == '<' && inG == 0) {
                             const beforeGeneric = modifiersAndReturn.substring(0, i).trim();
                             if (beforeGeneric.length > 0) {
-                                // Found it
+                                // 已找到泛型声明的开头
                                 const possibleModifier = beforeGeneric.split(/\s+/).pop();
                                 if (possibleModifier && ['public', 'private', 'protected', 'static', 'final', 'abstract'].includes(possibleModifier)) {
                                     returnTypeRaw = modifiersAndReturn.substring(i).trim();
@@ -109,7 +109,7 @@ export function parseMethodSignature(methodText: string): MethodInfo {
                 }
             }
 
-            // Cleanup annotations if they slip in (e.g. @ResponseBody IPage<T>)
+            // 清理注解（如果有修饰符带注解漏过来了例如 @ResponseBody IPage<T>）
             if (returnTypeRaw.includes('@')) {
                 const returnParts = returnTypeRaw.split(/\s+/);
                 returnTypeRaw = returnParts[returnParts.length - 1];
@@ -119,10 +119,10 @@ export function parseMethodSignature(methodText: string): MethodInfo {
         }
     }
 
-    // Special case for constructors: no return type, method name matches class name (we can check if return type matches modifiers)
+    // 构造方法的特殊情况：它没有返回值，且方法名和类名相同（此时返回值有可能被错误地赋值成了类修饰符，例如 'public'）
     if (['public', 'private', 'protected', 'void'].includes(info.returnType)) {
         if (info.returnType !== 'void') {
-            info.returnType = 'void'; // Constructor
+            info.returnType = 'void'; // 这是个构造函数，把返回值得修正为 void
         }
     }
 
@@ -148,7 +148,7 @@ function parseParameters(paramString: string): string[] {
             inGenerics--;
             currentParam += char;
         } else if (char === ',' && inGenerics === 0) {
-            // End of one parameter
+            // 遇到不在泛型作用范围里面的逗号，说明这一个参数结束了
             const paramName = extractParamName(currentParam);
             if (paramName) params.push(paramName);
             currentParam = '';
@@ -168,7 +168,7 @@ function parseParameters(paramString: string): string[] {
 function extractParamName(paramDecl: string): string {
     const parts = paramDecl.trim().split(/\s+/);
     if (parts.length >= 2) {
-        // Handle varargs like `String... args`
+        // 抹除 `String... args` 这样的可选不定参数标识
         let name = parts[parts.length - 1];
         if (name.startsWith('...')) {
             name = name.substring(3);

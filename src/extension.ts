@@ -1,18 +1,18 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
+// 'vscode' 模块包含 VS Code 扩展 API
+// 引入该模块并在下面的代码中使用别名 vscode 进行引用
 import * as vscode from 'vscode';
 import { generateMethodJavadoc } from './commands/methodJavadoc';
 import { generateFileHeader } from './commands/fileHeader';
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
+// 此方法在你的扩展被激活时调用
+// 你的扩展在第一次执行命令时激活
 export function activate(context: vscode.ExtensionContext) {
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
+	// 使用控制台输出诊断信息 (console.log) 和错误 (console.error)
+	// 这行代码将仅在你扩展激活时执行一次
 	console.log('Congratulations, your extension "java-javadoc-pro" is now active!');
 
-	// The command has been defined in the package.json file
+	// 这些命令已经在 package.json 文件中定义过了
 	const methodJavadocCommand = vscode.commands.registerCommand('java-javadoc-pro.generateMethodJavadoc', async () => {
 		try {
 			await generateMethodJavadoc();
@@ -32,5 +32,5 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(methodJavadocCommand, fileHeaderCommand);
 }
 
-// This method is called when your extension is deactivated
+// 当你的扩展被停用时调用此方法
 export function deactivate() { }

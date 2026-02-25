@@ -32,7 +32,7 @@ export async function generateFileHeader() {
         const lineText = document.lineAt(i).text.trim();
         if (lineText.startsWith('package ')) {
             packageLine = i;
-            packageName = lineText.substring(8, lineText.length - 1).trim(); // Remove 'package ' and ';'
+            packageName = lineText.substring(8, lineText.length - 1).trim(); // 剔除 'package ' 声明关键字以及末尾的 ';'
             break;
         }
     }
